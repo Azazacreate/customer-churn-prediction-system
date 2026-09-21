@@ -1,0 +1,52 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../artifacts:/app/artifacts
+      - ../data:/app/data
+      - ../reports:/app/reports
+    environment:
+      - PYTHONPATH=/app/src
+    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - mlflow
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.9.2
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../mlruns:/mlruns
+    command: >
+      mlflow server
+      --backend-store-uri /mlruns
+      --default-artifact-root /mlruns
+      --host 0.0.0.0
+      --port 5000
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: churn
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - chdata:/var/lib/clickhouse
+
+volumes:
+  pgdata:
+  chdata:

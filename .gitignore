@@ -1,0 +1,49 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# --- Секреты и локальные настройки ---
+.env
+*.env.local
+
+# --- Данные и артефакты моделей ---
+data/raw/
+data/interim/
+data/processed/
+artifacts/
+mlruns/
+mlflow.db
+reports/
+catboost_info/
+*.joblib
+*.pkl
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Airflow ---
+airflow/logs/
+airflow/cfg/
+*.pid
+
+# --- Тесты / кэш ---
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+.DS_Store
+
+
+_cache/
+_history_chat/
+myfolder/

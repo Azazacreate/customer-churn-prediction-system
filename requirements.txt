@@ -1,0 +1,40 @@
+# --- core data ---
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+scikit-learn>=1.3
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# --- gradient boosting ---
+xgboost>=2.0
+lightgbm>=4.0
+catboost>=1.2
+
+# --- experiment tracking / orchestration ---
+mlflow>=2.9
+apache-airflow>=2.8 ; python_version < "3.13"
+
+# --- data collection ---
+requests>=2.31
+beautifulsoup4>=4.12
+scrapy>=2.11
+lxml>=4.9
+
+# --- databases ---
+psycopg2-binary>=2.9
+clickhouse-driver>=0.2.6
+SQLAlchemy>=2.0
+
+# --- serving ---
+fastapi>=0.109
+uvicorn[standard]>=0.27
+pydantic>=2.5
+
+# --- viz / reporting ---
+matplotlib>=3.8
+seaborn>=0.13
+joblib>=1.3
+
+# --- tests ---
+pytest>=7.4
