@@ -7,6 +7,13 @@ sklearn, плюс нормальный пайплайн вокруг этого.
 ранжируем по риску, а для самых «горячих» запускаем кампанию удержания и
 смотрим, реально ли она помогла.
 
+## Стек
+Python, SQL, PostgreSQL, ClickHouse, Pandas, NumPy, Scikit-learn, XGBoost,
+LightGBM, CatBoost, MLflow, Apache Airflow, REST API, BeautifulSoup, Scrapy,
+FastAPI, A/B-тестирование.
+
+---
+
 Полный цикл — от сырых данных до сервиса, который отдаёт предсказания:
 - **Сбор данных** — скрапинг внешних источников (Scrapy + BeautifulSoup),
   интеграция с внутренним REST API, SQL-запросы к PostgreSQL и ClickHouse
