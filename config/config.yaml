@@ -1,15 +1,6 @@
-# ============================================================
-#  Конфигурация сквозного ML-пайплайна прогнозирования оттока
-# ------------------------------------------------------------
-#  Базовые значения. Секреты и локальные настройки (пароли, DSN,
-#  MLflow) удобнее держать в .env — он переопределяет часть полей.
-#  Скопируйте .env.example -> .env и заполните под себя.
-# ============================================================
-
 project:
   name: customer-churn-prediction-system
   seed: 42
-
 paths:
   raw_data: data/raw/churn_raw.parquet
   processed_data: data/processed/churn_features.parquet
@@ -17,10 +8,7 @@ paths:
   test_data: data/processed/test.parquet
   model_dir: artifacts/models
   report_dir: reports
-
-# --- источники данных -----------------------------------------
 sources:
-  # внутренний REST API
   api:
     base_url: https://api.internal.example.com/v1
     timeout: 30
@@ -28,12 +16,10 @@ sources:
       customers: /customers
       subscriptions: /subscriptions
       tickets: /support/tickets
-  # внешний веб-скрапинг (Scrapy + BeautifulSoup)
   scraping:
     enabled: false
     target_url: https://example.com/plans
     user_agent: "churn-research-bot/1.0"
-  # базы данных
   databases:
     postgres:
       dsn: postgresql://user:password@localhost:5432/churn
@@ -43,35 +29,27 @@ sources:
       port: 9000
       database: analytics
       enabled: false
-
-# --- генератор демо-данных ------------------------------------
 synthetic:
   n_samples: 20000
   churn_rate: 0.14          # базовая доля оттока
   start_date: 2022-01-01
   end_date: 2024-12-31
-
-# --- EDA / feature engineering --------------------------------
 features:
   numeric_impute: median     # median | mean
   categorical_impute: mode
   drop_columns:
     - customer_id
     - signup_date
-  # признаки, которые создаём вручную
   engineered:
     - avg_charge_per_gb
     - tickets_per_month
     - charge_to_tenure_ratio
     - is_new_customer
     - engagement_score
-  # отбор признаков
   selection:
     enabled: true
     method: importance        # importance | l1 | rfe
     top_k: 30
-
-# --- модели и обучение ----------------------------------------
 training:
   test_size: 0.2
   cv_folds: 5
@@ -98,14 +76,10 @@ training:
         depth: [3, 8]
         learning_rate: [0.01, 0.2]
   models: [logistic_regression, random_forest, xgboost, lightgbm, catboost]
-
-# --- MLflow ---------------------------------------------------
 mlflow:
   enabled: true
   tracking_uri: file:./mlruns
   experiment_name: churn-prediction
-
-# --- A/B-тестирование -----------------------------------------
 ab_testing:
   alpha: 0.05
   power: 0.80

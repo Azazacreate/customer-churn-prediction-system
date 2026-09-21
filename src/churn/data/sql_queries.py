@@ -1,14 +1,9 @@
 """SQL-запросы к PostgreSQL и ClickHouse.
-
 Здесь собраны аналитические запросы с JOIN, агрегациями и оконными функциями,
 которые формируют витрину признаков для модели оттока.
 Запросы параметризованы и совместимы с psycopg2 / clickhouse-driver.
 """
 from __future__ import annotations
-
-# --------------------------------------------------------------------------- #
-#  PostgreSQL
-# --------------------------------------------------------------------------- #
 CUSTOMER_BASE_SQL = """
 -- Базовая витрина клиентов: подписка + платежи
 SELECT
@@ -30,8 +25,6 @@ GROUP BY
     c.customer_id, c.signup_date, c.contract_type, c.payment_method,
     c.region, s.monthly_charges, s.internet_service;
 """
-
-# Оконная функция: динамика активности + ранг по выручке внутри региона
 ACTIVITY_WINDOW_SQL = """
 WITH activity AS (
     SELECT
@@ -61,8 +54,6 @@ FROM activity a
 JOIN revenue_rank r USING (customer_id)
 WHERE a.rn = 1;
 """
-
-# Признаки обращений в поддержку за последние 90 дней
 SUPPORT_FEATURES_SQL = """
 SELECT
     customer_id,
@@ -73,10 +64,6 @@ FROM support_tickets
 WHERE opened_at >= NOW() - INTERVAL '90 days'
 GROUP BY customer_id;
 """
-
-# --------------------------------------------------------------------------- #
-#  ClickHouse
-# --------------------------------------------------------------------------- #
 CLICKHOUSE_EVENTS_SQL = """
 SELECT
     customer_id,
@@ -90,7 +77,6 @@ GROUP BY customer_id
 HAVING logins > 0
 ORDER BY days_since_last_event ASC
 """
-
 CLICKHOUSE_FUNNEL_SQL = """
 SELECT
     customer_id,
@@ -103,8 +89,6 @@ SELECT
 FROM analytics.user_events
 GROUP BY customer_id
 """
-
-
 def all_queries() -> dict[str, str]:
     """Вернуть именованные запросы (для тестов/документации)."""
     return {

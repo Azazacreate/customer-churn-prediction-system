@@ -1,23 +1,15 @@
 """Клиент внутреннего REST API (клиенты, подписки, тикеты поддержки).
-
 Оборачивает `requests` с ретраями и пагинацией, возвращает pandas DataFrame.
 Предназначен для интеграции с внутренними сервисами компании.
 """
 from __future__ import annotations
-
 import time
 from typing import Any, Dict, Iterator, List
-
 import pandas as pd
-
 from churn.utils.logger import get_logger
-
 log = get_logger("churn.data.api_client")
-
-
 class ApiClient:
     """Простой REST-клиент с ретраями и пагинацией."""
-
     def __init__(
         self,
         base_url: str,
@@ -31,18 +23,14 @@ class ApiClient:
         self.token = token
         self.max_retries = max_retries
         self.backoff = backoff
-
-    # -- низкий уровень ----------------------------------------------------- #
     def _headers(self) -> Dict[str, str]:
         headers = {"Accept": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
-
     def get(self, path: str, params: Dict[str, Any] | None = None) -> Any:
         """GET с экспоненциальным backoff-ретраем."""
         import requests
-
         url = f"{self.base_url}/{path.lstrip('/')}"
         last_exc: Exception | None = None
         for attempt in range(1, self.max_retries + 1):
@@ -60,8 +48,6 @@ class ApiClient:
                 time.sleep(wait)
         log.error("REST запрос не удался: %s", url)
         raise RuntimeError(f"API request failed: {url}") from last_exc
-
-    # -- высокий уровень ---------------------------------------------------- #
     def paginate(
         self, path: str, page_size: int = 500, max_pages: int | None = None
     ) -> Iterator[Dict[str, Any]]:
@@ -77,14 +63,11 @@ class ApiClient:
             page += 1
             if max_pages is not None and page >= max_pages:
                 break
-
     def fetch_dataframe(self, path: str, **kwargs: Any) -> pd.DataFrame:
         """Собрать все страницы в DataFrame."""
         records: List[Dict[str, Any]] = list(self.paginate(path, **kwargs))
         log.info("REST %s -> %d записей", path, len(records))
         return pd.DataFrame(records)
-
-
 def fetch_customers(base_url: str, endpoints: Dict[str, str], token: str | None = None) -> Dict[str, pd.DataFrame]:
     """Забрать клиентов, подписки и тикеты одним вызовом."""
     client = ApiClient(base_url, token=token)

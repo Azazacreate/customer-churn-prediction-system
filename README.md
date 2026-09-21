@@ -1,13 +1,9 @@
-# Интеллектуальная система прогнозирования оттока клиентов (Classical ML & A/B).
 Проект про то, как предсказать, кто из клиентов уйдёт, и проверить эффект
 удержания через A/B-тест. Всё на классическом ML: градиентный бустинг и
 sklearn, плюс нормальный пайплайн вокруг этого.
-
 Считаем для каждого клиента вероятность оттока `P(churn)`,
 ранжируем по риску, а для самых «горячих» запускаем кампанию удержания и
 смотрим, реально ли она помогла.
-
-## Что внутри
 Полный цикл — от сырых данных до сервиса, который отдаёт предсказания:
 - **Сбор данных** — скрапинг внешних источников (Scrapy + BeautifulSoup),
   интеграция с внутренним REST API, SQL-запросы к PostgreSQL и ClickHouse
@@ -23,15 +19,10 @@ sklearn, плюс нормальный пайплайн вокруг этого.
 - **A/B-тесты** — проверка значимости: z-тест для долей, t-тест Уэлча для
   средних, p-value, доверительные интервалы, расчёт нужного размера выборки.
 - **Сервис** — FastAPI для онлайн-скоринга.
-
-## Стек
 Python, SQL, PostgreSQL, ClickHouse, Pandas, NumPy, Scikit-learn, XGBoost,
 LightGBM, CatBoost, MLflow, Apache Airflow, REST API, BeautifulSoup, Scrapy,
 FastAPI, A/B-тестирование.
-
-## Как запустить
 Нужен Python 3.10+.
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -41,18 +32,12 @@ make data                                           # генерируем де�
 make train                                          # обучаем модели
 make serve        # http://localhost:8000/docs      # поднимаем сервис скоринга
 ```
-
 Если не хочется разбираться с настройками — есть быстрый демо-прогон,
 который проходит весь путь на синтетических данных:
-
 ```bash
 make demo
 ```
-
-## Основные команды
-
 Все через единый CLI (`python -m churn.cli ...`):
-
 | Команда | Что делает |
 |---|---|
 | `generate-data` | Собрать или сгенерировать датасет |
@@ -64,20 +49,13 @@ make demo
 | `predict` | Скоринг файла с клиентами |
 | `serve` | Запустить FastAPI |
 | `pipeline` | Полный сквозной прогон |
-
 Пример A/B-теста:
-
 ```bash
 python -m churn.cli ab-test \
   --control-engaged 420 --control-total 5000 \
   --treat-engaged 520 --treat-total 5000
 ```
-
-## Docker
-
 ```bash
 cd docker
 docker compose up --build
-# API     -> http://localhost:8000/docs
-# MLflow  -> http://localhost:5000
 ```

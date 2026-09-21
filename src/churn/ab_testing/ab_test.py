@@ -1,28 +1,20 @@
 """Статистическая оценка A/B-тестов удержания.
-
 Реализованы два базовых сценария:
   * сравнение долей (конверсия удержания / доля оттока) — двухвыборочный z-тест
     для пропорций с проверкой нормальности выборки;
   * сравнение средних (LTV, ARPU, число сессий) — Welch t-test (неравные
     дисперсии), который не требует равенства размеров групп.
-
 Дополнительно считаются доверительные интервалы, размер эффекта (Cohen's h/d)
 и относительный прирост (uplift).
 """
 from __future__ import annotations
-
 import math
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, Tuple
-
 import numpy as np
 from scipy import stats
-
 from churn.utils.logger import get_logger
-
 log = get_logger("churn.ab_testing")
-
-
 @dataclass
 class AbResult:
     test_type: str
@@ -39,11 +31,8 @@ class AbResult:
     alpha: float
     significant: bool
     winner: str
-
     def to_dict(self) -> Dict[str, Any]:
         return {k: (round(v, 6) if isinstance(v, float) else v) for k, v in asdict(self).items()}
-
-
 def _decision(p_value: float, alpha: float, control: float, treatment: float) -> Tuple[bool, str]:
     significant = p_value < alpha
     if not significant:
@@ -53,8 +42,6 @@ def _decision(p_value: float, alpha: float, control: float, treatment: float) ->
     else:
         winner = "control"
     return significant, winner
-
-
 def proportion_test(
     control_engaged: int,
     control_total: int,
@@ -67,23 +54,17 @@ def proportion_test(
     p_c = control_engaged / control_total
     p_t = treat_engaged / treat_total
     p_pool = (control_engaged + treat_engaged) / (control_total + treat_total)
-
     se = math.sqrt(p_pool * (1 - p_pool) * (1 / control_total + 1 / treat_total))
     if se == 0:
         z, p_value = 0.0, 1.0
     else:
         z = (p_t - p_c) / se
         p_value = float(2 * (1 - stats.norm.cdf(abs(z))))
-
-    # доверительный интервал для разности пропорций
     se_diff = math.sqrt(p_c * (1 - p_c) / control_total + p_t * (1 - p_t) / treat_total)
     z_crit = stats.norm.ppf(1 - alpha / 2)
     diff = p_t - p_c
     ci_low, ci_high = diff - z_crit * se_diff, diff + z_crit * se_diff
-
-    # размер эффекта — Cohen's h
     effect = 2 * math.asin(math.sqrt(p_t)) - 2 * math.asin(math.sqrt(p_c))
-
     significant, winner = _decision(p_value, alpha, p_c, p_t)
     log.info(
         "Proportion test: control=%.4f treat=%.4f uplift=%.2f%% p=%.5f %s",
@@ -106,8 +87,6 @@ def proportion_test(
         significant=significant,
         winner=winner,
     )
-
-
 def means_test(
     control: np.ndarray,
     treatment: np.ndarray,
@@ -118,19 +97,14 @@ def means_test(
     control = np.asarray(control, dtype=float)
     treatment = np.asarray(treatment, dtype=float)
     m_c, m_t = control.mean(), treatment.mean()
-
     t_stat, p_value = stats.ttest_ind(treatment, control, equal_var=False)
-    # 95% CI для разности средних
     se = math.sqrt(control.var(ddof=1) / len(control) + treatment.var(ddof=1) / len(treatment))
     df = _welch_df(control, treatment)
     t_crit = stats.t.ppf(1 - alpha / 2, df)
     diff = m_t - m_c
     ci_low, ci_high = diff - t_crit * se, diff + t_crit * se
-
-    # Cohen's d (pooled)
     pooled = math.sqrt((control.var(ddof=1) + treatment.var(ddof=1)) / 2) or 1e-9
     effect = diff / pooled
-
     significant, winner = _decision(float(p_value), alpha, m_c, m_t)
     log.info("Means test: control=%.4f treat=%.4f p=%.5f %s",
              m_c, m_t, p_value, "SIGNIFICANT" if significant else "n.s.")
@@ -150,15 +124,11 @@ def means_test(
         significant=significant,
         winner=winner,
     )
-
-
 def _welch_df(a: np.ndarray, b: np.ndarray) -> float:
     """Степени свободы для Welch t-test."""
     va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
     denom = (va ** 2 / (len(a) - 1)) + (vb ** 2 / (len(b) - 1))
     return (va + vb) ** 2 / denom if denom else 1.0
-
-
 def summary_table(result: AbResult) -> str:
     """Человекочитаемая сводка результата."""
     sig = "✅ значимо" if result.significant else "❌ не значимо"

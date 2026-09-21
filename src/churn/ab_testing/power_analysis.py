@@ -1,20 +1,13 @@
 """Power analysis: расчёт MDE и необходимого размера выборки.
-
 Позволяет спланировать A/B-тест: сколько клиентов нужно в каждой группе,
 чтобы с заданной мощностью (power) поймать эффект заданной величины.
 """
 from __future__ import annotations
-
 import math
 from typing import Any, Dict
-
 from scipy import stats
-
 from churn.utils.logger import get_logger
-
 log = get_logger("churn.ab_testing.power")
-
-
 def sample_size_proportions(
     baseline_rate: float,
     mde_relative: float,
@@ -22,7 +15,6 @@ def sample_size_proportions(
     power: float = 0.80,
 ) -> Dict[str, Any]:
     """Размер выборки на группу для теста пропорций.
-
     Parameters
     ----------
     baseline_rate : базовая конверсия (например, 0.08 отток).
@@ -47,8 +39,6 @@ def sample_size_proportions(
         "sample_size_per_group": n,
         "total_sample_size": n * 2,
     }
-
-
 def mde_proportions(
     baseline_rate: float,
     sample_size_per_group: int,
@@ -70,8 +60,6 @@ def mde_proportions(
         "mde_absolute": round(mde_abs, 6),
         "mde_relative": round(mde_abs / baseline_rate, 6),
     }
-
-
 def achieved_power(
     baseline_rate: float,
     effect_relative: float,
