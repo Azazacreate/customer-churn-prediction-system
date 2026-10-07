@@ -1,48 +1,52 @@
 services:
-  api:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ../artifacts:/app/artifacts
-      - ../data:/app/data
-      - ../reports:/app/reports
-    environment:
-      - PYTHONPATH=/app/src
-    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
-    depends_on:
-      - mlflow
-  mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.9.2
-    ports:
-      - "5000:5000"
-    volumes:
-      - ../mlruns:/mlruns
-    command: >
-      mlflow server
-      --backend-store-uri /mlruns
-      --default-artifact-root /mlruns
-      --host 0.0.0.0
-      --port 5000
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15
+    container_name: churn_postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: churn
+      POSTGRES_USER: churn
+      POSTGRES_PASSWORD: churn
+      POSTGRES_DB: olist
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-  clickhouse:
-    image: clickhouse/clickhouse-server:24.3-alpine
+      - ../sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U churn -d olist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.1
+    container_name: churn_mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri postgresql://churn:churn@postgres:5432/olist
+      --default-artifact-root /mlartifacts
     ports:
-      - "8123:8123"
-      - "9000:9000"
+      - "5000:5000"
     volumes:
-      - chdata:/var/lib/clickhouse
+      - mlartifacts:/mlartifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inference:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: churn_inference
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_NAME: churn_model
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+
 volumes:
   pgdata:
-  chdata:
+  mlartifacts:

@@ -1,75 +1,19 @@
-# Интеллектуальная система прогнозирования оттока клиентов (Classical ML & A/B)
+# Система прогнозирования оттока клиентов и автоматизации удержания (Classical ML &amp; A/B).
 
-Проект про то, как предсказать, кто из клиентов уйдёт, и проверить эффект
-удержания через A/B-тест. Всё на классическом ML: градиентный бустинг и
-sklearn, плюс нормальный пайплайн вокруг этого.
-Считаем для каждого клиента вероятность оттока `P(churn)`,
-ранжируем по риску, а для самых «горячих» запускаем кампанию удержания и
-смотрим, реально ли она помогла.
+Описание: Разработал сквозной ML-пайплайн для предсказания вероятности оттока пользователей (на примере телеком/банковских данных) и спроектировал архитектуру для интеграции с системами таргетированных предложений.
 
-## Стек
-Python, SQL, PostgreSQL, ClickHouse, Pandas, NumPy, Scikit-learn, XGBoost,
-LightGBM, CatBoost, MLflow, Apache Airflow, REST API, BeautifulSoup, Scrapy,
-FastAPI, A/B-тестирование.
+Результат:
+•	Работа с данными: развернул локально PostgreSQL, написал сложные SQL-запросы (JOIN, оконные функции, агрегации) для формирования витрин данных и признаков.
+•	EDA и Feature Engineering: Провёл разведочный анализ, обработал дисбаланс классов (применил SMOTE / class weights), сгенерировал бизнес-фичи (LTV, частота транзакций, time-since-last-login), отобрал признаки с помощью feature importance.
+•	Моделирование: Обучил и сравнил градиентный бустинг (CatBoost, LightGBM, XGBoost). Оптимизировал PR-AUC (так как класс оттока несбалансирован) с учётом бизнес-метрик (стоимость ложного срабатывания vs стоимость удержания).
+•	MLOps: Настроил трекинг экспериментов и артефактов в MLflow. Автоматизировал пайплайн ежедневного инференса и еженедельного переобучения модели с помощью Apache Airflow.
+•	Спроектировал план A/B-теста для оценки эффекта от ML-модели: провел Power Analysis, рассчитал необходимый размер выборки и minimum detectable effect (MDE), определил первичные и вторичные метрики успеха.
+Стек: Python, SQL, PostgreSQL, Pandas, Scikit-learn, CatBoost, LightGBM, MLflow, Apache Airflow, Docker, A/B-тестирование (Power Analysis).
+
+dataset project-1
+
+1. Brazilian E-Commerce Public Dataset by Olist
+[https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
 
 ---
 
-Полный цикл — от сырых данных до сервиса, который отдаёт предсказания:
-- **Сбор данных** — скрапинг внешних источников (Scrapy + BeautifulSoup),
-  интеграция с внутренним REST API, SQL-запросы к PostgreSQL и ClickHouse
-  (JOIN, оконные функции).
-- **EDA и фичи** — разбор данных, обработка пропусков, кодирование
-  категориальных признаков, генерация новых фичей, отбор признаков
-  (L1 / RFE / важность модели).
-- **Модели** — XGBoost, LightGBM, CatBoost и классика из sklearn
-  (логистическая регрессия, RandomForest). Метрики ROC-AUC и PR-AUC,
-  подбор гиперпараметров, подбор порога под бизнес-задачу.
-- **MLOps** — трекинг экспериментов в MLflow, регулярное переобучение
-  и инференс в Apache Airflow.
-- **A/B-тесты** — проверка значимости: z-тест для долей, t-тест Уэлча для
-  средних, p-value, доверительные интервалы, расчёт нужного размера выборки.
-- **Сервис** — FastAPI для онлайн-скоринга.
-Python, SQL, PostgreSQL, ClickHouse, Pandas, NumPy, Scikit-learn, XGBoost,
-LightGBM, CatBoost, MLflow, Apache Airflow, REST API, BeautifulSoup, Scrapy,
-FastAPI, A/B-тестирование.
-Нужен Python 3.10+.
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-make data                                           # генерируем демо-данные (если нет доступа к реальным БД/API)
-make train                                          # обучаем модели
-make serve        # http://localhost:8000/docs      # поднимаем сервис скоринга
-```
-Если не хочется разбираться с настройками — есть быстрый демо-прогон,
-который проходит весь путь на синтетических данных:
-```bash
-make demo
-```
-Все через единый CLI (`python -m churn.cli ...`):
-| Команда | Что делает |
-|---|---|
-| `generate-data` | Собрать или сгенерировать датасет |
-| `eda` | Отчёт по данным + графики в `reports/` |
-| `train` | Обучение моделей и подбор гиперпараметров |
-| `evaluate` | Метрики лучшей модели |
-| `ab-test` | Оценка A/B-теста удержания |
-| `power` | Сколько нужно клиентов для теста (MDE) |
-| `predict` | Скоринг файла с клиентами |
-| `serve` | Запустить FastAPI |
-| `pipeline` | Полный сквозной прогон |
-Пример A/B-теста:
-```bash
-python -m churn.cli ab-test \
-  --control-engaged 420 --control-total 5000 \
-  --treat-engaged 520 --treat-total 5000
-```
-```bash
-cd docker
-docker compose up --build
-```
-
-
-конец.
---- 
